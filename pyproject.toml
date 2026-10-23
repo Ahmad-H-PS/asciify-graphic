@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "asciify-graphic"
-version = "1.0.0"
+version = "1.1.0"
 description = "A powerful tool to convert any picture or video file into an ASCII code picture, animation video, or interactive terminal playback."
 readme = "README.md"
 requires-python = ">=3.8"
@@ -31,6 +31,8 @@ dependencies = [
     "imageio-ffmpeg>=0.4",
     "click>=8.0",
     "rich>=12.0",
+    "requests>=2.25",
+    "yt-dlp>=2024.0.0",
 ]
 
 [project.scripts]

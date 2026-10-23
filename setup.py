@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="asciify-graphic",
-    version="1.0.0",
+    version="1.1.0",
     packages=find_packages(),
     include_package_data=True,
     install_requires=[
@@ -13,6 +13,8 @@ setup(
         "imageio-ffmpeg>=0.4",
         "click>=8.0",
         "rich>=12.0",
+        "requests>=2.25",
+        "yt-dlp>=2024.0.0",
     ],
     entry_points={
         "console_scripts": [
