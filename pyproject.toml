@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "asciify-graphic"
+version = "1.0.0"
+description = "A powerful tool to convert any picture or video file into an ASCII code picture, animation video, or interactive terminal playback."
+readme = "README.md"
+requires-python = ">=3.8"
+license = { text = "MIT" }
+authors = [
+    { name = "asciify developers" }
+]
+keywords = ["ascii", "ascii-art", "video-to-ascii", "image-to-ascii", "animation", "terminal"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Topic :: Multimedia :: Graphics",
+    "Topic :: Multimedia :: Video",
+]
+dependencies = [
+    "numpy>=1.20",
+    "pillow>=9.0",
+    "opencv-python-headless>=4.5",
+    "imageio>=2.20",
+    "imageio-ffmpeg>=0.4",
+    "click>=8.0",
+    "rich>=12.0",
+]
+
+[project.scripts]
+asciify = "asciify.cli:main"
+asciify-graphic = "asciify.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["asciify*"]
