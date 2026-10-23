@@ -22,24 +22,17 @@ from . import __version__
 from .charsets import CHARSETS
 from .config import AsciiConfig, parse_color
 from .converter import AsciiConverter
+from .downloader import is_url, is_youtube_url, resolve_media_input
 from .renderer import AsciiRenderer
 from .video import AsciiVideoConverter, get_video_info, play_video_terminal
 
 console = Console()
 
-VIDEO_EXTS = {".mp4", ".mkv", ".avi", ".mov", ".webm", ".flv", ".wmv", ".m4v"}
-
-
-def is_video_file(path: str) -> bool:
-    ext = os.path.splitext(path)[1].lower()
-    return ext in VIDEO_EXTS
-
 
 class SmartGroup(click.Group):
-    """Custom Click Group that intelligently dispatches file paths to 'auto'."""
+    """Custom Click Group that intelligently dispatches file paths or URLs to 'auto'."""
 
     def parse_args(self, ctx, args):
-        # If the first non-option argument is not a command, prepend 'auto'
         for i, arg in enumerate(args):
             if not arg.startswith("-"):
                 if arg not in self.commands:
@@ -52,12 +45,12 @@ class SmartGroup(click.Group):
 @click.group(cls=SmartGroup)
 @click.version_option(__version__, "-v", "--version", message="asciify-graphic version %(version)s")
 def cli():
-    """Asciify - Convert any image or video file into ASCII art, graphics, or animations."""
+    """Asciify - Convert any image or video file/link into ASCII art, graphics, or animations."""
     pass
 
 
 @cli.command("auto", hidden=True)
-@click.argument("input_file", type=click.Path(exists=True))
+@click.argument("input_source", type=str)
 @click.option("-o", "--output", help="Output file path (.txt, .ans, .html, .png, .mp4, .gif, etc.)")
 @click.option("-w", "--width", type=int, default=None, help="ASCII columns (width).")
 @click.option("-H", "--height", type=int, default=None, help="ASCII rows (height).")
@@ -78,7 +71,7 @@ def cli():
 @click.pass_context
 def auto_cmd(
     ctx,
-    input_file: str,
+    input_source: str,
     output: Optional[str],
     width: Optional[int],
     height: Optional[int],
@@ -98,11 +91,17 @@ def auto_cmd(
     audio: bool,
 ):
     """Auto-detect input type and perform conversion or playback."""
-    if is_video_file(input_file):
+    if is_url(input_source):
+        with console.status(f"[bold cyan]Fetching media from URL:[/bold cyan] {input_source}..."):
+            local_path, media_type = resolve_media_input(input_source)
+    else:
+        local_path, media_type = resolve_media_input(input_source)
+
+    if media_type == "video":
         if output:
             ctx.invoke(
                 convert_video_cmd,
-                input_video=input_file,
+                input_video=local_path,
                 output=output,
                 width=width or 120,
                 height=height,
@@ -125,7 +124,7 @@ def auto_cmd(
         else:
             ctx.invoke(
                 play_cmd,
-                input_video=input_file,
+                input_video=local_path,
                 width=width,
                 height=height,
                 charset=charset,
@@ -140,7 +139,7 @@ def auto_cmd(
     else:
         ctx.invoke(
             convert_image_cmd,
-            input_image=input_file,
+            input_image=local_path,
             output=output,
             width=width,
             height=height,
@@ -159,7 +158,7 @@ def auto_cmd(
 
 
 @cli.command("image")
-@click.argument("input_image", type=click.Path(exists=True))
+@click.argument("input_image", type=str)
 @click.option("-o", "--output", help="Output file path (.txt, .ans, .html, .png, .jpg, etc.). If omitted, prints to terminal.")
 @click.option("-w", "--width", type=int, default=None, help="ASCII columns (width). Defaults to terminal width or 100.")
 @click.option("-H", "--height", type=int, default=None, help="ASCII rows (height). Auto-calculated if omitted.")
@@ -191,7 +190,13 @@ def convert_image_cmd(
     font_size: int,
     font_path: Optional[str],
 ):
-    """Convert an image file to ASCII art (prints to terminal or saves to file)."""
+    """Convert an image file or URL to ASCII art (prints to terminal or saves to file)."""
+    if is_url(input_image):
+        with console.status(f"[bold cyan]Fetching image from URL:[/bold cyan] {input_image}..."):
+            input_image, _ = resolve_media_input(input_image, force_type="image")
+    else:
+        input_image, _ = resolve_media_input(input_image, force_type="image")
+
     # If no output specified and no width given, fit to terminal
     if output is None and width is None:
         term_cols, _ = shutil.get_terminal_size((80, 24))
@@ -227,7 +232,7 @@ def convert_image_cmd(
 
 
 @cli.command("video")
-@click.argument("input_video", type=click.Path(exists=True))
+@click.argument("input_video", type=str)
 @click.option("-o", "--output", required=True, help="Output file path (.mp4, .mkv, .avi, .gif, or folder for frame sequence).")
 @click.option("-w", "--width", type=int, default=120, help="ASCII columns. Default: 120.")
 @click.option("-H", "--height", type=int, default=None, help="ASCII rows. Auto-calculated if omitted.")
@@ -267,7 +272,13 @@ def convert_video_cmd(
     font_size: int,
     font_path: Optional[str],
 ):
-    """Convert a video file into an ASCII animation video or animated GIF."""
+    """Convert a video file or link into an ASCII animation video or animated GIF."""
+    if is_url(input_video):
+        with console.status(f"[bold cyan]Fetching video from link:[/bold cyan] {input_video}..."):
+            input_video, _ = resolve_media_input(input_video, force_type="video")
+    else:
+        input_video, _ = resolve_media_input(input_video, force_type="video")
+
     info = get_video_info(input_video)
     console.print(f"[bold cyan]Input Video:[/bold cyan] {input_video} ([dim]{info['width']}x{info['height']} @ {info['fps']:.2f} FPS, {info['total_frames']} frames[/dim])")
 
@@ -321,7 +332,7 @@ def convert_video_cmd(
 
 
 @cli.command("play")
-@click.argument("input_video", type=click.Path(exists=True))
+@click.argument("input_video", type=str)
 @click.option("-w", "--width", type=int, default=None, help="ASCII columns. Auto-fits terminal if omitted.")
 @click.option("-H", "--height", type=int, default=None, help="ASCII rows. Auto-fits terminal if omitted.")
 @click.option("-c", "--charset", default="standard", help="Character ramp preset or custom characters.")
@@ -345,7 +356,13 @@ def play_cmd(
     brightness: float,
     contrast: float,
 ):
-    """Play video directly in the terminal as real-time ASCII animation."""
+    """Play video or link directly in the terminal as real-time ASCII animation."""
+    if is_url(input_video):
+        with console.status(f"[bold cyan]Fetching video from link:[/bold cyan] {input_video}..."):
+            input_video, _ = resolve_media_input(input_video, force_type="video")
+    else:
+        input_video, _ = resolve_media_input(input_video, force_type="video")
+
     config = AsciiConfig(
         width=width,
         height=height,
@@ -374,12 +391,18 @@ def list_charsets_cmd():
 
 
 @cli.command("info")
-@click.argument("file_path", type=click.Path(exists=True))
+@click.argument("file_path", type=str)
 def info_cmd(file_path: str):
-    """Display format and dimension details for an image or video file."""
-    if is_video_file(file_path):
-        info = get_video_info(file_path)
-        table = Table(title=f"Video Information: {os.path.basename(file_path)}")
+    """Display format and dimension details for an image or video file or link."""
+    if is_url(file_path):
+        with console.status(f"[bold cyan]Inspecting remote media:[/bold cyan] {file_path}..."):
+            local_path, media_type = resolve_media_input(file_path)
+    else:
+        local_path, media_type = resolve_media_input(file_path)
+
+    if media_type == "video":
+        info = get_video_info(local_path)
+        table = Table(title=f"Video Information: {os.path.basename(local_path)}")
         table.add_column("Property", style="cyan")
         table.add_column("Value", style="green")
         table.add_row("Resolution", f"{info['width']} x {info['height']}")
@@ -389,8 +412,8 @@ def info_cmd(file_path: str):
         console.print(table)
     else:
         from PIL import Image
-        with Image.open(file_path) as img:
-            table = Table(title=f"Image Information: {os.path.basename(file_path)}")
+        with Image.open(local_path) as img:
+            table = Table(title=f"Image Information: {os.path.basename(local_path)}")
             table.add_column("Property", style="cyan")
             table.add_column("Value", style="green")
             table.add_row("Format", str(img.format))
