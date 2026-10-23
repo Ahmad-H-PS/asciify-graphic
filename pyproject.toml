@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "asciify-graphic"
-version = "1.1.0"
+version = "1.2.0"
 description = "A powerful tool to convert any picture or video file into an ASCII code picture, animation video, or interactive terminal playback."
 readme = "README.md"
 requires-python = ">=3.10"

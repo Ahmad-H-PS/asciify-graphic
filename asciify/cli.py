@@ -24,6 +24,7 @@ from .config import AsciiConfig, parse_color
 from .converter import AsciiConverter
 from .downloader import is_url, is_youtube_url, resolve_media_input
 from .renderer import AsciiRenderer
+from .storage import get_asciify_export_dir, resolve_output_path
 from .video import AsciiVideoConverter, get_video_info, play_video_terminal
 
 console = Console()
@@ -159,7 +160,7 @@ def auto_cmd(
 
 @cli.command("image")
 @click.argument("input_image", type=str)
-@click.option("-o", "--output", help="Output file path (.txt, .ans, .html, .png, .jpg, etc.). If omitted, prints to terminal.")
+@click.option("-o", "--output", help="Output file path (.txt, .ans, .html, .png, .jpg, etc.). Bare filenames save to Pictures/ASCIIFY.")
 @click.option("-w", "--width", type=int, default=None, help="ASCII columns (width). Defaults to terminal width or 100.")
 @click.option("-H", "--height", type=int, default=None, help="ASCII rows (height). Auto-calculated if omitted.")
 @click.option("-c", "--charset", default="standard", help="Character ramp preset or custom characters.")
@@ -223,8 +224,14 @@ def convert_image_cmd(
     renderer = AsciiRenderer()
 
     if output:
-        renderer.save(frame, output)
-        console.print(f"[bold green]Saved ASCII graphic to:[/bold green] [cyan]{output}[/cyan] ({frame.width}x{frame.height} chars)")
+        dest_path = resolve_output_path(
+            output,
+            input_image,
+            media_type="image",
+            default_ext=".png",
+        )
+        renderer.save(frame, dest_path)
+        console.print(f"[bold green]Saved ASCII graphic to:[/bold green] [cyan]{dest_path}[/cyan] ({frame.width}x{frame.height} chars)")
     else:
         ansi_text = renderer.to_ansi(frame, color=(color_mode != "none"))
         sys.stdout.write(ansi_text + "\n")
@@ -233,7 +240,7 @@ def convert_image_cmd(
 
 @cli.command("video")
 @click.argument("input_video", type=str)
-@click.option("-o", "--output", required=True, help="Output file path (.mp4, .mkv, .avi, .gif, or folder for frame sequence).")
+@click.option("-o", "--output", default=None, help="Output file path (.mp4, .mkv, .avi, .gif). If omitted or bare filename, saves to Videos/ASCIIFY.")
 @click.option("-w", "--width", type=int, default=120, help="ASCII columns. Default: 120.")
 @click.option("-H", "--height", type=int, default=None, help="ASCII rows. Auto-calculated if omitted.")
 @click.option("-c", "--charset", default="standard", help="Character ramp preset or custom characters.")
@@ -253,7 +260,7 @@ def convert_image_cmd(
 @click.option("--font-path", type=click.Path(exists=True), default=None, help="Custom TTF/OTF font file.")
 def convert_video_cmd(
     input_video: str,
-    output: str,
+    output: Optional[str],
     width: int,
     height: Optional[int],
     charset: str,
@@ -278,6 +285,13 @@ def convert_video_cmd(
             input_video, _ = resolve_media_input(input_video, force_type="video")
     else:
         input_video, _ = resolve_media_input(input_video, force_type="video")
+
+    dest_path = resolve_output_path(
+        output,
+        input_video,
+        media_type="video",
+        default_ext=".mp4",
+    )
 
     info = get_video_info(input_video)
     console.print(f"[bold cyan]Input Video:[/bold cyan] {input_video} ([dim]{info['width']}x{info['height']} @ {info['fps']:.2f} FPS, {info['total_frames']} frames[/dim])")
@@ -320,7 +334,7 @@ def convert_video_cmd(
 
         converter.convert_video(
             input_path=input_video,
-            output_path=output,
+            output_path=dest_path,
             fps_override=fps,
             max_frames=max_frames,
             frame_step=step,
@@ -328,7 +342,7 @@ def convert_video_cmd(
             progress_callback=on_progress,
         )
 
-    console.print(f"[bold green]ASCII animation successfully rendered to:[/bold green] [cyan]{output}[/cyan]")
+    console.print(f"[bold green]ASCII animation successfully rendered to:[/bold green] [cyan]{dest_path}[/cyan]")
 
 
 @cli.command("play")
