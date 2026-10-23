@@ -125,6 +125,10 @@ Convert any video into a rendered ASCII animation video or animated GIF:
 # Convert video to MP4 animation (audio is preserved by default!)
 asciify video clip.mp4 -o ascii_animation.mp4 --width 120
 
+# Convert directly from a YouTube link (full video or preview)
+asciify video "https://www.youtube.com/watch?v=dQw4w9WgXcQ" -o rickroll.mp4
+asciify video "https://www.youtube.com/watch?v=dQw4w9WgXcQ" -o rickroll_preview.mp4 --max-frames 120
+
 # Convert video to animated GIF
 asciify video clip.mp4 -o animation.gif --width 80 --fps 15
 
@@ -186,8 +190,8 @@ You can also use `asciify` directly in your Python code:
 ```python
 from asciify import AsciiConfig, AsciiConverter, AsciiRenderer, convert_image
 
-# One-liner to convert and save
-convert_image("input.jpg", "output.png", width=120, color_mode="color")
+# One-liner to convert and save (local file or direct image URL)
+convert_image("https://example.com/photo.jpg", "output.png", width=120, color_mode="color")
 
 # Advanced programmatic access
 config = AsciiConfig(
@@ -199,18 +203,7 @@ config = AsciiConfig(
 )
 
 converter = AsciiConverter(config)
-frame = converter.convert_image("input.jpg")
-
-# Access character matrix and colors directly
-print(frame.chars)         # 2D numpy array of characters (rows, cols)
-print(frame.colors)        # 3D numpy array of RGB colors (rows, cols, 3)
-
-# Render to different representations
-plain_text = AsciiRenderer.to_text(frame)
-ansi_terminal = AsciiRenderer.to_ansi(frame)
-html_document = AsciiRenderer.to_html(frame, title="My ASCII Art")
-pil_image = AsciiRenderer().to_image(frame)
-pil_image.save("rendered_art.png")
+frame = converter.convert_image("photo.jpg")
 ```
 
 ### Video Conversion & Playback
@@ -218,9 +211,9 @@ pil_image.save("rendered_art.png")
 ```python
 from asciify import convert_video, play_video
 
-# Convert video to MP4 animation with audio
+# Convert video (local file or YouTube link) to MP4 animation with audio
 convert_video(
-    input_path="input.mp4",
+    input_path="https://www.youtube.com/watch?v=dQw4w9WgXcQ",
     output_path="output_ascii.mp4",
     width=120,
     color_mode="color",
@@ -230,8 +223,8 @@ convert_video(
 # Convert video to GIF
 convert_video("input.mp4", "output_ascii.gif", width=80, fps=12)
 
-# Play video in terminal
-play_video("input.mp4", color_mode="cyan", loop=False)
+# Stream video or YouTube link directly in terminal
+play_video("https://www.youtube.com/watch?v=dQw4w9WgXcQ", color_mode="cyan", loop=False)
 ```
 
 ---
@@ -243,6 +236,7 @@ play_video("input.mp4", color_mode="cyan", loop=False)
 2. **Glyph Atlas Blitting**: Font glyph alpha masks are pre-rendered once into an atlas `(N, char_h, char_w, 1)`. Frame compositing operates via vectorized broadcast multiplication, achieving **~60+ FPS per CPU core** for HD frames.
 3. **Run-Length Optimized ANSI**: Adjacent terminal characters sharing identical RGB colors are collapsed into single escape sequences, minimizing string overhead and maximizing terminal refresh rates.
 4. **Self-Contained FFmpeg Muxing**: Direct H.264 video streaming and audio muxing without requiring external system package installations.
+5. **Smart URL & YouTube Caching**: Direct images and YouTube streams are downloaded once to local cache with SHA-256 validation to avoid redundant downloads.
 
 ---
 
@@ -254,7 +248,7 @@ Run the test suite with `pytest`:
 pytest -v
 ```
 
-All 22 unit and integration tests verify image conversion, video rendering, audio muxing, glyph atlas rasterization, and CLI dispatch.
+All 28 unit and integration tests verify image conversion, video rendering, audio muxing, glyph atlas rasterization, URL downloads, YouTube format merging, and CLI dispatch.
 
 ---
 
