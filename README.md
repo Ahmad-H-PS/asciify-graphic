@@ -6,6 +6,12 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 
+<p align="center">
+  <img src="examples/flower_blooming.gif" alt="ASCII version of a blooming flower animation" width="600">
+  <br>
+  <sub>Made with asciify-graphic. Original animation: <a href="https://www.youtube.com/watch?v=siL3cLng6Es">"Flower blooming - animation practice"</a> by xaloriun.</sub>
+</p>
+
 ---
 
 ## ✨ Features
