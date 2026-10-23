@@ -71,6 +71,10 @@ class AsciiConverter:
         """Convert an image (filepath, PIL Image, or numpy array) to an AsciiFrame."""
         # 1. Load image to RGB PIL Image
         if isinstance(image_input, str):
+            from .downloader import is_url, resolve_media_input
+            if is_url(image_input):
+                local_path, _ = resolve_media_input(image_input, force_type="image")
+                image_input = local_path
             pil_img = Image.open(image_input)
         elif isinstance(image_input, np.ndarray):
             # Check shape and channel order
