@@ -2,6 +2,7 @@ from click.testing import CliRunner
 from PIL import Image
 import pytest
 
+from asciify import __version__
 from asciify.cli import cli
 
 
@@ -17,7 +18,7 @@ def test_cli_version():
     runner = CliRunner()
     result = runner.invoke(cli, ["--version"])
     assert result.exit_code == 0
-    assert "1.0.0" in result.output
+    assert __version__ in result.output
 
 
 def test_cli_charsets():

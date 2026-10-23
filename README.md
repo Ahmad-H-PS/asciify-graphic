@@ -10,6 +10,7 @@
 ## ✨ Features
 
 - **Any Image & Video Format**: Supports PNG, JPG, JPEG, WEBP, BMP, GIF, MP4, MKV, AVI, MOV, WebM, and more.
+- **Direct URLs & YouTube Streaming**: Convert pictures and videos directly from web links, including YouTube, shorts, and video platforms.
 - **Multiple Output Formats**:
   - **Rasterized Graphics**: Render high-definition ASCII graphics (`.png`, `.jpg`, `.webp`) using a pre-rendered vectorized font atlas.
   - **Animation Videos**: Render full-length ASCII animation videos (`.mp4`, `.mkv`, `.avi`, `.webm`) with **audio track preservation**.
@@ -61,20 +62,21 @@ The tool installs the `asciify` (and alias `asciify-graphic`) command.
 
 ### 1. Smart Auto-Detection
 
-`asciify` automatically detects whether your input is an image or video:
+`asciify` automatically detects whether your input is an image, video, direct URL, or YouTube link:
 
 ```bash
-# Print image as ASCII to terminal
+# Print image as ASCII to terminal (local or URL)
 asciify photo.jpg
+asciify https://example.com/logo.png
 
-# Save image as ASCII PNG graphic
-asciify photo.jpg -o ascii_graphic.png
+# Stream a YouTube video directly in your terminal in real-time!
+asciify https://www.youtube.com/watch?v=dQw4w9WgXcQ
 
-# Play video directly in terminal
-asciify clip.mp4
+# Convert a YouTube video to an ASCII animation video (audio preserved)
+asciify https://www.youtube.com/watch?v=dQw4w9WgXcQ -o rickroll_ascii.mp4
 
-# Convert video to ASCII animation video (with audio preserved!)
-asciify clip.mp4 -o ascii_clip.mp4
+# Save online image as ASCII PNG graphic
+asciify https://picsum.photos/400/300 -o ascii_art.png
 ```
 
 ---
