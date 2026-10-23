@@ -116,11 +116,15 @@ asciify image photo.jpg -o blocks.png -c blocks --edge
 - `--font-size <int>`: Font size in pixels for rendered images (default: 16)
 - `--font-path <path>`: Custom TTF/OTF monospace font file
 
+When you save an image with a bare filename (for example, `-o art.png`), it is placed in the `ASCIIFY` folder under your Pictures folder (`~/Pictures/ASCIIFY` on macOS/Linux or `%USERPROFILE%\Pictures\ASCIIFY` on Windows). If you omit `-o`, image conversion prints to the terminal instead. To save elsewhere, provide a path such as `-o ./art.png`.
+
 ---
 
 ### 3. Video Conversion (`asciify video`)
 
 Convert any video into a rendered ASCII animation video or animated GIF:
+
+Video exports are saved in the `ASCIIFY` folder under your Videos folder (`~/Videos/ASCIIFY` on macOS/Linux or `%USERPROFILE%\Videos\ASCIIFY` on Windows) when you provide a bare filename. If `-o` is omitted from the `video` command, it creates a default `<input>_ascii.mp4` there. Provide a path such as `-o ./animation.mp4` to save elsewhere.
 
 ```bash
 # Convert video to MP4 animation (audio is preserved by default!)
