@@ -4,6 +4,8 @@ import hashlib
 import mimetypes
 import os
 import re
+import shutil
+import sys
 import tempfile
 from typing import Optional, Tuple
 from urllib.parse import urlparse
@@ -146,6 +148,31 @@ def download_direct_url(
     return cached_path, media_type
 
 
+def ensure_ffmpeg_in_cache() -> str:
+    """Ensure ffmpeg binary is available with standard executable name in cache directory and PATH."""
+    cache_dir = get_cache_dir()
+    is_win = sys.platform == "win32"
+    exe_name = "ffmpeg.exe" if is_win else "ffmpeg"
+    target_ffmpeg = os.path.join(cache_dir, exe_name)
+
+    if not os.path.isfile(target_ffmpeg) or os.path.getsize(target_ffmpeg) == 0:
+        src = imageio_ffmpeg.get_ffmpeg_exe()
+        try:
+            os.link(src, target_ffmpeg)
+        except Exception:
+            try:
+                shutil.copyfile(src, target_ffmpeg)
+            except Exception:
+                target_ffmpeg = src
+
+    # Also prepend cache directory to PATH for any subprocess lookups
+    path_env = os.environ.get("PATH", "")
+    if cache_dir not in path_env:
+        os.environ["PATH"] = cache_dir + os.pathsep + path_env
+
+    return target_ffmpeg
+
+
 def download_youtube_video(
     url: str,
     output_dir: Optional[str] = None,
@@ -162,8 +189,7 @@ def download_youtube_video(
         )
 
     target_dir = output_dir or get_cache_dir()
-    ffmpeg_exe = imageio_ffmpeg.get_ffmpeg_exe()
-    ffmpeg_dir = os.path.dirname(ffmpeg_exe)
+    ffmpeg_bin = ensure_ffmpeg_in_cache()
 
     # Check if video was already downloaded in cache
     # First extract info without downloading to get ID
@@ -191,7 +217,7 @@ def download_youtube_video(
     ydl_opts = {
         "format": f"bestvideo[height<={max_resolution}][ext=mp4]+bestaudio[ext=m4a]/best[height<={max_resolution}]/best",
         "outtmpl": outtmpl,
-        "ffmpeg_location": ffmpeg_dir,
+        "ffmpeg_location": ffmpeg_bin,
         "merge_output_format": "mp4",
         "quiet": False,
         "no_warnings": True,
